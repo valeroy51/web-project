@@ -5,8 +5,14 @@ import requests
 import time
 import django
 import sys
-from setup import setup
-setup()
+from pathlib import Path
+import django
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(BASE_DIR))
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Skripsi.settings")
+django.setup()
 
 from django.conf import settings
 BASE_DIR = settings.BASE_DIR

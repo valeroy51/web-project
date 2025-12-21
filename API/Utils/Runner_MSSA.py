@@ -1,7 +1,13 @@
 import os
 import sys
-from setup import setup
-setup()
+from pathlib import Path
+import django
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(BASE_DIR))
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Skripsi.settings")
+django.setup()
 
 import glob
 from django.conf import settings
@@ -46,7 +52,7 @@ def run_mssa_for_all():
             OUT_DIR=out_dir,
             energy_thr=0.97,
             l_min=40,
-            l_max=100,
+            l_max=40,
             n_jobs_inner=-1
         )
 

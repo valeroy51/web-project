@@ -3,8 +3,14 @@ import sys
 import django
 import pandas as pd
 from math import radians, sin, cos, sqrt, atan2
-from setup import setup
-setup()
+from pathlib import Path
+import django
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(BASE_DIR))
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "Skripsi.settings")
+django.setup()
 
 from django.conf import settings
 from API.models import Station, PollutantData, MeteorologicalData
