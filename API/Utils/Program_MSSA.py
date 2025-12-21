@@ -297,7 +297,7 @@ def run_mssa_for_L(L, df_train, df_test, fitur_cols, df_norm_all, energy_thr):
     r_star = int(np.argmax(np.cumsum(energy) >= energy_thr) + 1)
     r_star = max(1, r_star)
 
-    print(f"r* (≥{energy_thr}): {r_star}")
+    print(f"r* (>={energy_thr}): {r_star}")
 
     M = len(blok)
     rec_cumul = [np.zeros(N_train) for _ in range(M)]
@@ -427,7 +427,7 @@ def run_mssa_pipeline(DATA_PATH, NORM_POL_PATH, NORM_MET_PATH, OUT_DIR,
         l_max = min(l_max, max_possible_L)
 
         if l_min > l_max:
-            print(f"️l_min ({l_min}) lebih besar dari l_max ({l_max}). "
+            print(f"l_min ({l_min}) lebih besar dari l_max ({l_max}). "
                 f"l_min diset ulang menjadi {l_max}.")
             l_min = l_max
 

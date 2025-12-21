@@ -18,7 +18,14 @@ from API.models import Station, PollutantData, MeteorologicalData
 from API.models import MapView
 
 BASE_DIR = settings.BASE_DIR
-INPUT_DIR = os.path.join(BASE_DIR, "Dataset", "example")
+
+DATA_DIR_ENV = os.getenv("Data_Dir")
+
+if DATA_DIR_ENV:
+    INPUT_DIR = DATA_DIR_ENV
+else:
+    INPUT_DIR = os.path.join(BASE_DIR, "Dataset", "example")
+    
 OUTPUT_DIR = os.path.join(BASE_DIR, "Dataset", "Preprocess_1")
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 

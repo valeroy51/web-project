@@ -14,6 +14,14 @@ from django.conf import settings
 
 from API.Utils.Program_MSSA import run_mssa_pipeline
 
+windowlength = os.getenv("L_MAX")
+
+if windowlength:
+    L_MAX = windowlength
+else:
+    L_MAX = 40
+
+
 def run_mssa_for_all():
     BASE = settings.BASE_DIR
     
@@ -52,7 +60,7 @@ def run_mssa_for_all():
             OUT_DIR=out_dir,
             energy_thr=0.97,
             l_min=40,
-            l_max=40,
+            l_max=int(L_MAX),
             n_jobs_inner=-1
         )
 
