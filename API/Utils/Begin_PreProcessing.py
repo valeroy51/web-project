@@ -49,6 +49,8 @@ def save_stations_to_db(folder_path):
     df_names = load_excel_names(folder_path)
     time.sleep(1)
 
+    hasil_geojson = []
+    
     for name in df_names:
         loc_name = name.replace("_", " ").strip()
         address = f"{loc_name}, Indonesia"
@@ -68,8 +70,25 @@ def save_stations_to_db(folder_path):
             defaults={'latitude': geo['lat'], 'longitude': geo['lon']}
         )
 
+        hasil_geojson.append({
+            "nama_stasiun": name,
+            "latitude": geo["lat"],
+            "longitude": geo["lon"]
+        })
+        
         time.sleep(1)
 
+    folder_path = os.path.join(BASE_DIR, "Dataset", "Website Essential")
+    os.makedirs(folder_path, exist_ok=True)
+    
+    json_path = os.path.join(folder_path, "Stasiun_coordinate.json")
+
+    with open(json_path, "w", encoding="utf-8") as f:
+        import json
+        json.dump(hasil_geojson, f, indent=2, ensure_ascii=False)
+
+    print(f"\nFile JSON koordinat stasiun tersimpan di: {json_path}")
+        
     print("\nSemua titik stasiun sudah disimpan ke database Django!")
 
 if __name__ == "__main__":

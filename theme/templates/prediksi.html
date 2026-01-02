@@ -182,9 +182,6 @@
 <script>
   const ctx = document.getElementById('chartPrediksi').getContext('2d');
 
-  const labels = JSON.parse(`{{ labels|safe }}`);
-  const dataPolutan = JSON.parse(`{{ chart_data|safe }}`);
-
   const colorMap = {
     PM10: '#2563eb',
     PM25: '#16a34a',
@@ -194,61 +191,57 @@
     NO2: '#0ea5e9'
   };
 
-  function generateDatasets(selected) {
-    let datasets = [];
-    for (const key of Object.keys(dataPolutan)) {
-      if (selected !== "ALL" && key !== selected) continue;
+  let chart = null;
+  let dataPolutan = {};
+  let labels = [];
 
-      datasets.push({
-        label: key,
-        borderColor: colorMap[key],
-        backgroundColor: colorMap[key],
-        data: dataPolutan[key],
+  function generateDatasets(selected) {
+    return Object.keys(dataPolutan)
+      .filter(k => selected === "ALL" || k === selected)
+      .map(k => ({
+        label: k,
+        borderColor: colorMap[k],
+        backgroundColor: colorMap[k],
+        data: dataPolutan[k],
         tension: 0.3,
         pointRadius: 4,
         pointStyle: 'circle'
-      });
-    }
-    return datasets;
+      }));
   }
 
-  const chart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: labels,
-      datasets: generateDatasets("PM25")
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-      },
-      scales: {
-        x: {
-          title: {
-            display: true,
-            text: "Tanggal Prediksi",
-            font: { size: 13, weight: "bold" }
-          },
+  const apiUrl = "{% url 'prediksi' id_station=station_id %}?format=json";
+
+  fetch(apiUrl, { headers: { "Accept": "application/json" } })
+    .then(r => r.json())
+    .then(data => {
+      console.log("API OK:", data);
+
+      labels = data.labels || [];
+      dataPolutan = data.chart_data || {};
+
+      chart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: generateDatasets("PM25")
         },
-        y: {
-          beginAtZero: true,
-          title: {
-            display: true,
-            text: "Nilai ISPU",
-            font: { size: 13, weight: "bold" }
-          },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { title: { display: true, text: "Tanggal Prediksi" } },
+            y: { beginAtZero: true, title: { display: true, text: "Nilai ISPU" } }
+          }
         }
-      }
-    }
-  });
+      });
 
-
-  document.getElementById("selectPolutan").addEventListener("change", function () {
-    chart.data.datasets = generateDatasets(this.value);
-    chart.update();
-  });
+      document.getElementById("selectPolutan").addEventListener("change", function () {
+        chart.data.datasets = generateDatasets(this.value);
+        chart.update();
+      });
+    })
+    .catch(err => console.error("Gagal fetch data prediksi:", err));
 </script>
 
 {% endblock %}

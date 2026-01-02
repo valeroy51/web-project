@@ -212,7 +212,7 @@
           </p>
         </div>
 
-        <form method="post" action="{% url 'schedule_train' %}">
+        <form id="scheduleForm" method="post" action="{% url 'schedule_train' %}">
           {% csrf_token %}
           <input type="hidden" id="tz_offset" name="tz_offset">
 
@@ -297,6 +297,26 @@
 <script>
   document.getElementById("tz_offset").value = new Date().getTimezoneOffset();
 </script>
+
+<script>
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      cookie = cookie.trim();
+      if (cookie.startsWith(name + '=')) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
+const csrfToken = getCookie('csrftoken');
+</script>
+
 
 <script>
   document.addEventListener("DOMContentLoaded", function () {

@@ -118,7 +118,7 @@
   };
   legend.addTo(map);
 
-  const stations = JSON.parse(`{{ stations|safe|escapejs }}`);
+  const stations = JSON.parse(`{{ stations_json|safe }}`);
 
 
   stations.forEach(s => {

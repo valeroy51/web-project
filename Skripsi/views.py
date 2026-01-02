@@ -3,7 +3,8 @@ import sys
 import json
 import logging
 import warnings
-import locale
+from babel.dates import format_date
+from django.http import JsonResponse
 import difflib
 from collections import Counter
 from datetime import date, timedelta
@@ -36,13 +37,15 @@ import json, os
 from django.shortcuts import redirect
 from django.contrib import messages
 from django.utils import timezone
-from datetime import datetime
 from datetime import datetime, timedelta, timezone
 import json, os
+import threading
+from functools import wraps
+
 
 logger = logging.getLogger(__name__)
 
-locale.setlocale(locale.LC_TIME, 'id_ID.UTF-8')
+format_date(datetime.now(), "EEEE, d MMMM y", locale="id")
 
 SCHEDULE_FILE = "training_schedule.json"
 
@@ -52,40 +55,103 @@ def admin_login(request):
         password = request.POST.get("password")
 
         masked_pw = "*" * len(password) if password else ""
-
         logger.warning(f"[LOGIN ATTEMPT] Username: {username} | Password Masked: {masked_pw}")
 
         user = authenticate(request, username=username, password=password)
 
-        if user is not None:
-            if user.is_staff:  
-                login(request, user)
-                logger.warning(f"[LOGIN SUCCESS] User '{username}' berhasil login sebagai admin.")
-                return redirect("home")
-            else:
-                logger.warning(f"[LOGIN BLOCKED] User '{username}' bukan admin.")
-                messages.error(request, "Akses ditolak. Akun ini bukan admin.")
-                return redirect("admin_login")
-
-        else:
+        if user is None:
             logger.warning(f"[LOGIN FAILED] Username '{username}' gagal login.")
+
+            if wants_json(request):
+                return JsonResponse(
+                    {"status": "error", "message": "Username atau password salah"},
+                    status=401
+                )
+
             messages.error(request, "Username atau password salah.")
+            return redirect("admin_login")
+
+        if not user.is_staff:
+            logger.warning(f"[LOGIN BLOCKED] User '{username}' bukan admin.")
+
+            if wants_json(request):
+                return JsonResponse(
+                    {"status": "forbidden", "message": "Akun ini bukan admin"},
+                    status=403
+                )
+
+            messages.error(request, "Akses ditolak. Akun ini bukan admin.")
+            return redirect("admin_login")
+
+        # sukses
+        login(request, user)
+        logger.warning(f"[LOGIN SUCCESS] User '{username}' berhasil login sebagai admin.")
+
+        if wants_json(request):
+            return JsonResponse({
+                "status": "ok",
+                "message": "Login berhasil",
+                "redirect": "/",  # home
+            })
+
+        return redirect("home")
+
+    # GET
+    if wants_json(request):
+        return JsonResponse(
+            {"detail": "Gunakan method POST"},
+            status=405
+        )
 
     return render(request, "admin_login.html")
 
 def admin_logout(request):
     logout(request)
-    return redirect('home')
+
+    if wants_json(request):
+        return JsonResponse({
+            "status": "ok",
+            "message": "Logout berhasil",
+            "redirect": "/",  # home
+        })
+
+    return redirect("home")
+
+def wants_json(request):
+    accept = (request.headers.get("Accept") or "").lower()
+    return (
+        request.GET.get("format") == "json"
+        or "application/json" in accept
+        or request.headers.get("X-Requested-With") == "XMLHttpRequest"
+    )
 
 def admin_required(view_func):
+    @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated or not request.user.is_staff:
-            messages.error(request, "Anda tidak memiliki akses ke halaman ini.")
-            return redirect('home')
+        if not request.user.is_authenticated:
+            if wants_json(request):
+                return JsonResponse(
+                    {"status": "unauthorized", "message": "Silakan login terlebih dahulu"},
+                    status=401
+                )
+            messages.error(request, "Silakan login terlebih dahulu.")
+            return redirect("admin_login")
+
+        if not request.user.is_staff:
+            if wants_json(request):
+                return JsonResponse(
+                    {"status": "forbidden", "message": "Akses ditolak. Akun ini bukan admin"},
+                    status=403
+                )
+            messages.error(request, "Akses ditolak. Akun ini bukan admin.")
+            return redirect("home")
+
         return view_func(request, *args, **kwargs)
     return wrapper
 
 def polutan_info(request):
+    if wants_json(request):
+        return JsonResponse({"status": "ok", "page": "penjelasan"})
     return render(request, "penjelasan.html")
 
 def home(request):
@@ -218,7 +284,20 @@ def home(request):
         best_station = "-"
         worst_station = "-"
 
-    return render(request, "home.html", {"stations": json.dumps(station_data), "realtime": realtime, "best_station": best_station, "worst_station": worst_station})
+    # return render(request, "home.html", {"stations": json.dumps(station_data), "realtime": realtime, "best_station": best_station, "worst_station": worst_station})
+
+    payload = {
+        "stations": station_data,
+        "realtime": realtime,
+        "best_station": best_station,
+        "worst_station": worst_station,
+    }
+
+    if wants_json(request):
+        return JsonResponse(payload)
+
+    payload["stations_json"] = json.dumps(station_data)
+    return render(request, "home.html", payload)
 
 @admin_required
 def data(request):
@@ -236,7 +315,6 @@ def data(request):
             return val
         except Exception:
             return None
-
 
     if not cache.get('server_alive'):
         cache.set('server_alive', True, timeout=None)
@@ -352,7 +430,17 @@ def data(request):
                         messages.success(request, "Data polutan baru disimpan.")
                     else:
                         messages.info(request, "Data polutan lama diperbarui.")
-                return redirect('/input/')
+                # return redirect('/input/')
+                
+                if wants_json(request):
+                    return JsonResponse({
+                        "status": "ok",
+                        "action": "save_pollutant",
+                        "created": created,
+                        "message": "Data polutan baru disimpan." if created else "Data polutan lama diperbarui.",
+                    })
+                return redirect("/input/")
+
 
         elif 'save_meteo' in request.POST:
             meteo_form = MeteorologicalDataForm(request.POST)
@@ -374,7 +462,16 @@ def data(request):
                         messages.success(request, f"Data meteorologi baru disimpan untuk {station_input.nama_stasiun} ({tanggal_input}).")
                     else:
                         messages.info(request, f"Data meteorologi untuk {station_input.nama_stasiun} tanggal {tanggal_input} telah diperbarui.")
-                return redirect('/input/')
+                # return redirect('/input/')
+                
+                if wants_json(request):
+                    return JsonResponse({
+                        "status": "ok",
+                        "action": "save_meteo",
+                        "created": created,
+                        "message": "Data meteorologi baru disimpan." if created else "Data meteorologi lama diperbarui.",
+                    })
+                return redirect("/input/")
 
         elif 'upload' in request.POST and request.FILES.get('upload_file'):
             file = request.FILES['upload_file']
@@ -388,18 +485,28 @@ def data(request):
                     df = pd.read_excel(file)
                 else:
                     messages.error(request, "Format file tidak didukung.")
-                    return redirect('input')
+                    
+                    if wants_json(request):
+                        return JsonResponse({"status": "error", "message": "Format file tidak didukung."}, status=400)
+                    return redirect("input")
+                
             except Exception as e:
                 messages.error(request, f"Gagal membaca file: {e}")
-                return redirect('input')
+                if wants_json(request):
+                    return JsonResponse({"status": "error", "message": "Gagal membaca file."}, status=400)
+                return redirect("input")
             
             if df.empty or df.dropna(how="all").shape[0] == 0:
                 messages.error(request, "File kosong! Pastikan Anda sudah mengisi data sebelum mengunggah template.")
-                return redirect('input')
+                if wants_json(request):
+                    return JsonResponse({"status": "error", "message": "File kosong!."}, status=400)
+                return redirect("input")
 
             if 'tanggal' not in [c.lower().strip().replace(' ', '') for c in df.columns]:
                 messages.error(request, "File tidak memiliki kolom 'tanggal'. Pastikan format template sesuai.")
-                return redirect('input')
+                if wants_json(request):
+                    return JsonResponse({"status": "error", "message": "File tidak memiliki kolom 'tanggal'."}, status=400)
+                return redirect("input")
 
 
             df.columns = (
@@ -416,8 +523,10 @@ def data(request):
 
             if 'tanggal' not in df.columns:
                 messages.error(request, "Kolom 'tanggal' tidak ditemukan di file.")
-                return redirect('data')
-
+                if wants_json(request):
+                    return JsonResponse({"status": "error", "message": "Kolom 'tanggal' tidak ditemukan di file."}, status=400)
+                return redirect("data")
+            
             df['tanggal'] = parsedate(df['tanggal'])
             df = df[df['tanggal'].notna()]
             df = df[(df['tanggal'] >= min_allowed_date) & (df['tanggal'] <= max_allowed_date)]
@@ -430,7 +539,9 @@ def data(request):
 
             if df.empty:
                 messages.error(request, "Tidak ada data dalam rentang tanggal valid.")
-                return redirect('data')
+                if wants_json(request):
+                    return JsonResponse({"status": "error", "message": "Tidak ada data dalam rentang tanggal valid."}, status=400)
+                return redirect("data")
 
             inserted, skipped = 0, 0
             matched_log = []
@@ -480,7 +591,9 @@ def data(request):
                     if not station_col:
                         print("Tidak ada kolom stasiun di file, kolom saat ini:", df.columns.to_list())
                         messages.error(request, "Tidak ada kolom stasiun di file!")
-                        return redirect('data')
+                        if wants_json(request):
+                            return JsonResponse({"status": "error", "message": "Tidak ada kolom stasiun di file!."}, status=400)
+                        return redirect("data")
 
                     stasiun_input = str(row.get(station_col, '')).strip().lower()
                     guessed_name = find_closest_station(stasiun_input)
@@ -543,7 +656,9 @@ def data(request):
                     if not station_col:
                         print("Tidak ada kolom stasiun di file, kolom saat ini:", df.columns.to_list())
                         messages.error(request, "Tidak ada kolom stasiun di file!")
-                        return redirect('data')
+                        if wants_json(request):
+                            return JsonResponse({"status": "error", "message": "Tidak ada kolom stasiun di file!."}, status=400)
+                        return redirect("data")
 
                     stasiun_input = str(row.get(station_col, '')).strip().lower()
                     
@@ -588,6 +703,18 @@ def data(request):
 
             active_tab = "upload"
             
+            if wants_json(request):
+                return JsonResponse({
+                    "status": "ok",
+                    "action": "upload",
+                    "file_name": uploaded_filename,
+                    "file_type": file_type,
+                    "inserted": inserted,
+                    "skipped": skipped,
+                    "upload_history": request.session.get("upload_history", []),
+                })
+
+            
         if uploaded_filename and inserted > 0:
             upload_history = request.session.get('upload_history', [])
 
@@ -607,31 +734,98 @@ def data(request):
         else:
             print("Upload tidak ditambahkan ke riwayat karena tidak ada data yang berhasil dimasukkan.")
 
+    # context = {
+    #     'polutan_form': polutan_form,
+    #     'meteo_form': meteo_form,
+    #     'uploaded_filename': uploaded_filename,
+    #     'file_type': file_type,
+    #     'active_tab': active_tab,
+    #     'upload_history': request.session.get('upload_history', []),
+    # }
+    # return render(request, 'data.html', context)
+    
     context = {
-        'polutan_form': polutan_form,
-        'meteo_form': meteo_form,
-        'uploaded_filename': uploaded_filename,
-        'file_type': file_type,
-        'active_tab': active_tab,
-        'upload_history': request.session.get('upload_history', []),
+        "polutan_form": polutan_form,
+        "meteo_form": meteo_form,
+        "uploaded_filename": uploaded_filename,
+        "file_type": file_type,
+        "active_tab": active_tab,
+        "upload_history": request.session.get("upload_history", []),
     }
-    return render(request, 'data.html', context)
+
+    if wants_json(request):
+        return JsonResponse({
+            "status": "ok",
+            "upload_history": context["upload_history"],
+            "active_tab": context["active_tab"],
+            "uploaded_filename": context["uploaded_filename"],
+            "file_type": context["file_type"],
+        })
+
+    return render(request, "data.html", context)
 
 @admin_required
 def merge(request):
+    if request.method != "POST":
+        if wants_json(request):
+            return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+        messages.error(request, "Method tidak diizinkan.")
+        return redirect("input")
+
     from API.Utils.preprocess_ke_2 import prepare_training_data
-    prepare_training_data()
-    messages.success(request, "Merging data berhasil dipersiapkan.")
-    return redirect('input')
+
+    def job():
+        try:
+            prepare_training_data()
+        except Exception as e:
+            print("[MERGE ERROR]", e)
+
+    threading.Thread(target=job, daemon=True).start()
+
+    if wants_json(request):
+        return JsonResponse({
+            "status": "started",
+            "message": "Merging data berjalan di background",
+        })
+
+    messages.success(request, "Merging data sedang diproses.")
+    return redirect("input")
 
 @admin_required
 def train(request):
+    if request.method != "POST":
+        if wants_json(request):
+            return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+        messages.error(request, "Method tidak diizinkan.")
+        return redirect("input")
+        
     from API.Utils.Runner_MSSA import run_mssa_for_all
-    run_mssa_for_all()
-    messages.success(request, "Training MSSA selesai! Cek folder output.")
+    
+    def job():
+        try:
+            run_mssa_for_all()
+        except Exception as e:
+            print("[MERGE ERROR]", e)
+
+    threading.Thread(target=job, daemon=True).start()
+
+    if wants_json(request):
+        return JsonResponse({
+            "status": "started",
+            "message": "Training MSSA sedang berjalan di background",
+        })
+
+    messages.success(request, "Training MSSA sedang berjalan.")
     return redirect("input")
 
+@admin_required
 def schedule_train(request):
+    if request.method != "POST":
+        if wants_json(request):
+            return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+        messages.error(request, "Method tidak diizinkan.")
+        return redirect("input")
+    
     if request.method == "POST":
         schedule_time = request.POST.get("schedule_time")
         offset_minutes = int(request.POST.get("tz_offset"))  # contoh: -420
@@ -645,16 +839,33 @@ def schedule_train(request):
         with open(SCHEDULE_FILE, "w") as f:
             json.dump({"scheduled_at": dt.isoformat()}, f)
 
+        if wants_json(request):
+            return JsonResponse({
+                "status": "ok",
+                "scheduled_at": dt.isoformat(),
+                "message": "Training berhasil dijadwalkan"
+            })
+
         messages.success(request, f"Training dijadwalkan pada {dt}")
         return redirect("input")
-
+        # return JsonResponse({"status":"ok", "scheduled_at": dt.isoformat()})
+    
 def tentang(request):
     team = [
         {"name": "Valeroy Putra Sientika", "role": "Mahasiswa"},
         {"name": "Lely Hiryanto ST., M.Sc.,PH.D", "role": "Dosen Pembimbing 1"},
         {"name": "Janson Hendryli S.Kom. M.KOM", "role": "Dosen Pembimbing 2"},
     ]
-    return render(request, "tentang.html", {"team": team})
+    # return render(request, "tentang.html", {"team": team})
+
+    payload = {
+        "team": team,
+    }
+
+    if wants_json(request):
+        return JsonResponse(payload, safe=False)
+
+    return render(request, "tentang.html", payload)
 
 def analisis(request):
     korelasi = CorrelationAnalysis.objects.all().order_by("-tanggal_analisis")
@@ -695,7 +906,7 @@ def analisis(request):
 
     if korelasi:
         best = max(korelasi, key=lambda r: float(r.nilai_korelasi))
-        top_title = best.pasangan_variabel.replace("×", " – ")
+        top_title = best.pasangan_variabel.replace("×", " - ")
         top_value = round(float(best.nilai_korelasi), 2)
     else:
         top_title, top_value = "-", 0.0
@@ -763,7 +974,17 @@ def analisis(request):
         {"icon": "🌧️", "title": "Rata-rata ISPU DKI", "desc": "Rata-rata kualitas udara seluruh stasiun", "value": f"{avg_ispu}"},
     ]
 
-    return render(request, "analisis.html", {
+    # return render(request, "analisis.html", {
+    #     "cards": cards,
+    #     "heatmap_data": heatmap_data,
+    #     "ispu_labels": labels_pol,
+    #     "ispu_values_avg": avg_pred_values,
+    #     "ispu_station_data": ispu_station_data,
+    #     "bar_labels": bar_labels,
+    #     "bar_actual_ispu": bar_actual_ispu,
+    # })
+    
+    payload = {
         "cards": cards,
         "heatmap_data": heatmap_data,
         "ispu_labels": labels_pol,
@@ -771,7 +992,12 @@ def analisis(request):
         "ispu_station_data": ispu_station_data,
         "bar_labels": bar_labels,
         "bar_actual_ispu": bar_actual_ispu,
-    })
+    }
+
+    if wants_json(request):
+        return JsonResponse(payload, safe=False)
+
+    return render(request, "analisis.html", payload)
 
 def prediksi(request, id_station):
     stasiun = get_object_or_404(Station, id_station=id_station)
@@ -859,21 +1085,58 @@ def prediksi(request, id_station):
 
     last_update = data7hari[1]["day"] if data7hari else "-"
     
-    context = {
-    "station": stasiun.nama_stasiun.replace(", Indonesia", ""),
-    "data7hari": data7hari,
-    "labels": json.dumps(labels),
-    "chart_data": json.dumps(chart_data),
-    "model": model,
-    "akurasi": akurasi,
-    "mape": mape,
-    "rmse": rmse,
-    "mse": mse,
-    "mae": mae,
-    "p": p,
-    "l":l,
-    "k":k,
-    "r":r,
-    "last_update": last_update,
-}
-    return render(request, "prediksi.html", context)
+    # context = {
+    #     "station": stasiun.nama_stasiun.replace(", Indonesia", ""),
+    #     "data7hari": data7hari,
+    #     "labels": json.dumps(labels),
+    #     "chart_data": json.dumps(chart_data),
+    #     "model": model,
+    #     "akurasi": akurasi,
+    #     "mape": mape,
+    #     "rmse": rmse,
+    #     "mse": mse,
+    #     "mae": mae,
+    #     "p": p,
+    #     "l":l,
+    #     "k":k,
+    #     "r":r,
+    #     "last_update": last_update,
+    # }
+    
+    # return render(request, "prediksi.html", context)
+    
+    payload = {
+        "station": stasiun.nama_stasiun.replace(", Indonesia", ""),
+        "last_update": last_update,
+        "data7hari": data7hari,
+        "labels": labels,
+        "chart_data": chart_data,
+        "model": {
+            "akurasi": akurasi,
+            "mape": mape,
+            "rmse": rmse,
+            "mse": mse,
+            "mae": mae,
+            "p": p,
+            "l": l,
+            "k": k,
+            "r": r,
+        }
+    }
+    
+    if wants_json(request):
+        return JsonResponse(payload, safe=False)
+    
+    payload["station_id"] = id_station
+    
+    payload["akurasi"] = payload["model"]["akurasi"]
+    payload["mape"] = payload["model"]["mape"]
+    payload["rmse"] = payload["model"]["rmse"]
+    payload["mse"] = payload["model"]["mse"]
+    payload["mae"] = payload["model"]["mae"]
+    payload["p"] = payload["model"]["p"]
+    payload["l"] = payload["model"]["l"]
+    payload["k"] = payload["model"]["k"]
+    payload["r"] = payload["model"]["r"]
+    
+    return render(request, "prediksi.html", payload)

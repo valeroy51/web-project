@@ -19,6 +19,8 @@ from npmpaths import getPathNPM
 from huey import MemoryHuey
 import os
 
+from datetime import timedelta
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,7 +39,10 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.ngrok-free.dev']
 # Application definition
 TAILWIND_APP_NAME = 'theme'
 
-NPM_BIN_PATH = getPathNPM()
+try:
+    NPM_BIN_PATH = getPathNPM()
+except Exception:
+    NPM_BIN_PATH = None
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -50,6 +55,7 @@ INSTALLED_APPS = [
     'theme',
     'API.apps.ApiConfig',
     'huey.contrib.djhuey',
+    "rest_framework",
 ]
 
 if DEBUG:
@@ -67,6 +73,15 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'Skripsi.middleware.NoCacheMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
+    ),
+}
 
 if DEBUG:
     # Add django_browser_reload middleware only in DEBUG mode
@@ -96,7 +111,13 @@ WSGI_APPLICATION = 'Skripsi.wsgi.application'
 
 HUEY = MemoryHuey('mssa_training', immediate=False)
 
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
 
+    
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 

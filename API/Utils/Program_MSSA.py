@@ -13,13 +13,17 @@ from tqdm import tqdm
 from django.utils import timezone
 
 ENERGY_THR = 0.97
-L_MIN, L_MAX = 40,100
+L_MIN, L_MAX = 40,40
 N_JOBS_INNER = -1
 LAMBDA_RIDGE = 1e-3
 
-MERGE_DIR = os.getenv("MERGE_DIR")
-NORM_DIR  = os.getenv("NORM_DIR")
-OUT_ROOT  = os.getenv("OUT_ROOT")
+MERGE_DIR = r"D:\Skripsi\Program\Skripsi\Dataset\Preprocess_2\Merged"
+NORM_DIR  = r"D:\Skripsi\Program\Skripsi\Dataset\Preprocess_2\MinMax"
+OUT_ROOT  = fr"D:\Skripsi\Program\Skripsi\Dataset\MSSA\New MSSA 2 {L_MIN} {L_MAX}"
+
+# MERGE_DIR = os.getenv("MERGE_DIR")
+# NORM_DIR  = os.getenv("NORM_DIR")
+# OUT_ROOT  = os.getenv("OUT_ROOT")
 
 SKIP_COLS = {"tanggal", "stasiun", "Tanggal", "Stasiun"}
 POLUTAN   = {"pm10", "pm25", "so2", "no2", "co", "o3"}
@@ -568,12 +572,20 @@ def run_mssa_pipeline(DATA_PATH, NORM_POL_PATH, NORM_MET_PATH, OUT_DIR,
         save_plot = os.path.join(plot_dir, f"{col}_Actual_vs_Predict.png")
         _plot_per_polutan(y_true, y_pred, ttl, save_plot)
 
-        eval_rows.append([col, mse, rmse, mae, r2, save_plot])
+        eval_rows.append([col, mse, rmse, mae, r2])
 
-    df_eval = pd.DataFrame(eval_rows, columns=["Fitur","MSE","RMSE","MAE","R2","PlotPath"])
+    df_eval = pd.DataFrame(eval_rows, columns=["Fitur","MSE","RMSE","MAE","R2"])
     mean_acc = df_eval["R2"].clip(lower=0).mean()*100 if not df_eval.empty else 0.0
     df_eval.to_excel(os.path.join(OUT_DIR, "Eval_PerPolutan.xlsx"), index=False)
 
+    json_eval_path = os.path.join(OUT_DIR, "Eval_Polutan.json")
+    df_json_eval = df_eval.copy()
+    df_json_eval.to_json(
+        json_eval_path,
+        orient="records",
+        indent=2,
+        force_ascii=False)
+    
     time_eval_end = time.time()
     eval_time = time_eval_end - time_eval_start
     print(f"Lama evaluasi: {eval_time:.2f} detik")
@@ -684,8 +696,11 @@ def predict_next_7_days(best_model, df_norm, fitur_cols, save_dir, last_date):
     ]
     df_future.insert(0, "Tanggal", tanggal_prediksi)
 
+    kolom_output = ["Tanggal"] + list(POLUTAN)
+    df_output = df_future[kolom_output]
+    
     save_path = os.path.join(save_dir, "Prediksi_7Hari.xlsx")
-    df_future.to_excel(save_path, index=False)
+    df_output.to_excel(save_path, index=False)
     print(f"Prediksi 7 hari tersimpan di: {save_path}")
 
     plot_dir = os.path.join(save_dir, "plots_7d")
@@ -709,6 +724,21 @@ def predict_next_7_days(best_model, df_norm, fitur_cols, save_dir, last_date):
         plt.close()
 
     print(f"Grafik prediksi 7 hari disimpan di: {plot_dir}")
+    
+    json_path = os.path.join(save_dir, "Prediksi_7Hari.json")
+
+    df_json = df_output.copy()
+    df_json["Tanggal"] = pd.to_datetime(df_json["Tanggal"]).dt.strftime("%Y-%m-%d")
+
+    df_json.to_json(
+        json_path,
+        orient="records",
+        indent=2,
+        force_ascii=False
+    )
+
+    print(f"Prediksi 7 hari JSON tersimpan di: {json_path}")
+
 
     return df_future
 

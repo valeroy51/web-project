@@ -2,6 +2,7 @@ import os
 import sys
 import numpy as np
 import pandas as pd
+import json
 import django
 from datetime import datetime
 from pathlib import Path
@@ -240,6 +241,37 @@ def update_mapview_last_row(df, station):
 
     print(f"[MAPVIEW UPDATED] {station.nama_stasiun} — "
           f"{last['Tanggal'].date()} — ISPU={ispu}")
+    
+def get_last_polutan_row(df, station_name=None):
+    if df.empty:
+        return None
+
+    # pastikan kolom Tanggal benar
+    if "tanggal" in df.columns and "Tanggal" not in df.columns:
+        df = df.rename(columns={"tanggal": "Tanggal"})
+
+    if "Tanggal" not in df.columns:
+        return None
+
+    df = df.copy()
+    df["Tanggal"] = pd.to_datetime(df["Tanggal"], errors="coerce")
+    df = df[df["Tanggal"].notna()]
+    if df.empty:
+        return None
+
+    # ambil baris terbaru
+    last = df.sort_values("Tanggal").iloc[-1]
+
+    return {
+        "Station": station_name,  # kalau ga mau, boleh hapus
+        "Tanggal": last["Tanggal"].date().isoformat(),
+        "pm10": safe_float(last.get("pm10")),
+        "pm25": safe_float(last.get("pm25")),
+        "so2": safe_float(last.get("so2")),
+        "co": safe_float(last.get("co")),
+        "o3": safe_float(last.get("o3")),
+        "no2": safe_float(last.get("no2")),
+    }
 
 
 def preprocess_uploaded_df(df, station=None, file_type=None):
@@ -259,6 +291,8 @@ if __name__ == "__main__":
 
     files = [f for f in os.listdir(INPUT_DIR) if f.endswith(".xlsx")]
 
+    Map_json = []
+    
     for file in files:
         print(f"\nProcessing file: {file}")
 
@@ -286,6 +320,21 @@ if __name__ == "__main__":
             for _, row in df.iterrows():
                 insert_polutan_row(row, station)
             print(f"Insert POLUTAN OK: {station_name}")
+            
+            last_pol = get_last_polutan_row(df, station_name=station.nama_stasiun)
+            if last_pol is not None:
+                Map_json.append(last_pol)
+                
+            folder_path = os.path.join(BASE_DIR, "Dataset", "Website Essential")
+            os.makedirs(folder_path, exist_ok=True)
+
+            json_path = os.path.join(folder_path, "Data_Map.json")
+
+            with open(json_path, "w", encoding="utf-8") as f:
+                json.dump(Map_json, f, indent=2, ensure_ascii=False)
+
+            print(f"\nFile JSON koordinat stasiun tersimpan di: {json_path}")
+            
             update_mapview_last_row(df, station)
 
         elif file_type == "meteo":

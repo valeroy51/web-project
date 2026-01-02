@@ -5,6 +5,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from scipy.stats import spearmanr
+import json
 import warnings
 import django
 from datetime import date
@@ -168,7 +169,7 @@ if __name__ == "__main__":
     df.rename(columns=new_cols, inplace=True)
 
     polutan_cols = [c for c in df.columns if c in ["pm10", "pm25", "so2", "co", "o3", "no2"]]
-    meteo_cols   = [c for c in df.columns if c in ["tn", "tx", "tavg", "rhavg", "rr", "ffx", "ffavg"]]
+    meteo_cols   = [c for c in df.columns if c in ["tn", "tx", "tavg", "rhavg", "rr", "ffx"]]
 
     print("Polutan:", polutan_cols)
     print("Meteo:", meteo_cols)
@@ -197,3 +198,18 @@ if __name__ == "__main__":
 
     print("\nKorelasi berhasil disimpan ke database!")
     print("=== SELESAI ===\n")
+
+
+folder_path = os.path.join(BASE_DIR, "Dataset", "Website Essential")
+os.makedirs(folder_path, exist_ok=True)
+json_path = os.path.join(folder_path, "Korelasi.json")
+
+spearman_clean = spearman.round(4).where(pd.notna(spearman), None)
+
+with open(json_path, "w", encoding="utf-8") as f:
+    json.dump(spearman_clean.to_dict(orient="index"),
+                f,
+                indent=2,
+                ensure_ascii=False)
+
+print(f"JSON korelasi tersimpan di: {json_path}")
