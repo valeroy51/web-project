@@ -11,15 +11,19 @@ from datetime import datetime
 import time
 from tqdm import tqdm
 from django.utils import timezone
+from pathlib import Path
+from django.conf import settings
+import os
+
 
 ENERGY_THR = 0.97
 L_MIN, L_MAX = 40,40
 N_JOBS_INNER = -1
 LAMBDA_RIDGE = 1e-3
 
-MERGE_DIR = r"D:\Skripsi\Program\Skripsi\Dataset\Preprocess_2\Merged"
-NORM_DIR  = r"D:\Skripsi\Program\Skripsi\Dataset\Preprocess_2\MinMax"
-OUT_ROOT  = fr"D:\Skripsi\Program\Skripsi\Dataset\MSSA\New MSSA 2 {L_MIN} {L_MAX}"
+MERGE_DIR = Path(settings.BASE_DIR) / "Dataset" / "Preprocess_2" / "Merged"
+NORM_DIR  = Path(settings.BASE_DIR) / "Dataset" / "Preprocess_2" / "MinMax"
+OUT_ROOT  = Path(settings.BASE_DIR) / "Dataset" / "MSSA"
 
 # MERGE_DIR = os.getenv("MERGE_DIR")
 # NORM_DIR  = os.getenv("NORM_DIR")
