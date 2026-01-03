@@ -1,0 +1,123 @@
+{
+  "stations": [
+    {
+      "id": 1,
+      "name": "Bundaran HI",
+      "coords": [
+        -6.1949853,
+        106.8226741
+      ],
+      "status": "Sedang",
+      "status_clean": "Sedang",
+      "color": "blue",
+      "tanggal": "29 October 2025",
+      "ispu": 83,
+      "polutan_utama": "PM\u003Csub\u003E2.5\u003C/sub\u003E",
+      "data": {
+        "PM\u003Csub\u003E10\u003C/sub\u003E": 53,
+        "PM\u003Csub\u003E2.5\u003C/sub\u003E": 83,
+        "SO\u003Csub\u003E2\u003C/sub\u003E": 36,
+        "CO": 25,
+        "O\u003Csub\u003E3\u003C/sub\u003E": 18,
+        "NO\u003Csub\u003E2\u003C/sub\u003E": 48
+      }
+    },
+    {
+      "id": 3,
+      "name": "Jagakarsa",
+      "coords": [
+        -6.3301011,
+        106.8222371
+      ],
+      "status": "Sedang",
+      "status_clean": "Sedang",
+      "color": "blue",
+      "tanggal": "29 October 2025",
+      "ispu": 74,
+      "polutan_utama": "PM\u003Csub\u003E2.5\u003C/sub\u003E",
+      "data": {
+        "PM\u003Csub\u003E10\u003C/sub\u003E": 54,
+        "PM\u003Csub\u003E2.5\u003C/sub\u003E": 74,
+        "SO\u003Csub\u003E2\u003C/sub\u003E": 60,
+        "CO": 16,
+        "O\u003Csub\u003E3\u003C/sub\u003E": 26,
+        "NO\u003Csub\u003E2\u003C/sub\u003E": 53
+      }
+    },
+    {
+      "id": 4,
+      "name": "Kebon Jeruk",
+      "coords": [
+        -6.192572,
+        106.7697255
+      ],
+      "status": "Sedang",
+      "status_clean": "Sedang",
+      "color": "blue",
+      "tanggal": "29 October 2025",
+      "ispu": 87,
+      "polutan_utama": "PM\u003Csub\u003E2.5\u003C/sub\u003E",
+      "data": {
+        "PM\u003Csub\u003E10\u003C/sub\u003E": 57,
+        "PM\u003Csub\u003E2.5\u003C/sub\u003E": 87,
+        "SO\u003Csub\u003E2\u003C/sub\u003E": 32,
+        "CO": 13,
+        "O\u003Csub\u003E3\u003C/sub\u003E": 39,
+        "NO\u003Csub\u003E2\u003C/sub\u003E": 39
+      }
+    },
+    {
+      "id": 5,
+      "name": "Kelapa Gading",
+      "coords": [
+        -6.1599379,
+        106.9024826
+      ],
+      "status": "Sedang",
+      "status_clean": "Sedang",
+      "color": "blue",
+      "tanggal": "29 October 2025",
+      "ispu": 80,
+      "polutan_utama": "PM\u003Csub\u003E2.5\u003C/sub\u003E",
+      "data": {
+        "PM\u003Csub\u003E10\u003C/sub\u003E": 72,
+        "PM\u003Csub\u003E2.5\u003C/sub\u003E": 80,
+        "SO\u003Csub\u003E2\u003C/sub\u003E": 47,
+        "CO": 24,
+        "O\u003Csub\u003E3\u003C/sub\u003E": 20,
+        "NO\u003Csub\u003E2\u003C/sub\u003E": 22
+      }
+    },
+    {
+      "id": 7,
+      "name": "Lubang Buaya",
+      "coords": [
+        -6.2928737,
+        106.9030865
+      ],
+      "status": "Sedang",
+      "status_clean": "Sedang",
+      "color": "blue",
+      "tanggal": "29 October 2025",
+      "ispu": 67,
+      "polutan_utama": "PM\u003Csub\u003E2.5\u003C/sub\u003E",
+      "data": {
+        "PM\u003Csub\u003E10\u003C/sub\u003E": 52,
+        "PM\u003Csub\u003E2.5\u003C/sub\u003E": 67,
+        "SO\u003Csub\u003E2\u003C/sub\u003E": 32,
+        "CO": 17,
+        "O\u003Csub\u003E3\u003C/sub\u003E": 29,
+        "NO\u003Csub\u003E2\u003C/sub\u003E": 29
+      }
+    }
+  ],
+  "realtime": {
+    "Baik": 0,
+    "Sedang": 5,
+    "Tidak_Sehat": 0,
+    "Sangat_Tidak_Sehat": 0,
+    "Berbahaya": 0
+  },
+  "best_station": "Lubang Buaya",
+  "worst_station": "Kebon Jeruk"
+}

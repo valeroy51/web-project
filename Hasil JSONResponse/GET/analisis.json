@@ -1,0 +1,314 @@
+{
+  "cards": [
+    {
+      "icon": "🌡️",
+      "title": "PM₁₀  -  Temperatur Minimum",
+      "desc": "Korelasi terkuat antar parameter",
+      "value": "+0.30"
+    },
+    {
+      "icon": "💨",
+      "title": "Polutan Dominan",
+      "desc": "Kadar PM₂.₅ tertinggi dari hasil prediksi",
+      "value": "92.02"
+    },
+    {
+      "icon": "🔁",
+      "title": "Prediksi vs Aktual (PM₂.₅)",
+      "desc": "Selisih rata-rata PM₂.₅ terhadap data aktual",
+      "value": "+17.7%"
+    },
+    {
+      "icon": "🌧️",
+      "title": "Rata-rata ISPU DKI",
+      "desc": "Rata-rata kualitas udara seluruh stasiun",
+      "value": "43.5"
+    }
+  ],
+  "heatmap_data": [
+    {
+      "x": "Curah Hujan",
+      "y": "CO",
+      "v": -0.0491368414100625
+    },
+    {
+      "x": "Kecepatan Angin Maksimum",
+      "y": "CO",
+      "v": 0.0458666713314159
+    },
+    {
+      "x": "Kecepatan Angin Rata Rata",
+      "y": "CO",
+      "v": -0.253543405989562
+    },
+    {
+      "x": "Kelembapan Rata Rata",
+      "y": "CO",
+      "v": 0.0670182294830724
+    },
+    {
+      "x": "Temperatur Maksimum",
+      "y": "CO",
+      "v": 0.11609670376351
+    },
+    {
+      "x": "Temperatur Minimum",
+      "y": "CO",
+      "v": 0.0884389279896304
+    },
+    {
+      "x": "Temperatur Rata Rata",
+      "y": "CO",
+      "v": 0.0412194324239275
+    },
+    {
+      "x": "Curah Hujan",
+      "y": "NO₂",
+      "v": -0.272827106125927
+    },
+    {
+      "x": "Kecepatan Angin Maksimum",
+      "y": "NO₂",
+      "v": -0.2430771754631
+    },
+    {
+      "x": "Kecepatan Angin Rata Rata",
+      "y": "NO₂",
+      "v": -0.173927922441928
+    },
+    {
+      "x": "Kelembapan Rata Rata",
+      "y": "NO₂",
+      "v": -0.215772963358639
+    },
+    {
+      "x": "Temperatur Maksimum",
+      "y": "NO₂",
+      "v": 0.26675389064801
+    },
+    {
+      "x": "Temperatur Minimum",
+      "y": "NO₂",
+      "v": -0.0639219482220831
+    },
+    {
+      "x": "Temperatur Rata Rata",
+      "y": "NO₂",
+      "v": 0.286431481512128
+    },
+    {
+      "x": "Curah Hujan",
+      "y": "O₃",
+      "v": -0.0915887535171304
+    },
+    {
+      "x": "Kecepatan Angin Maksimum",
+      "y": "O₃",
+      "v": -0.0655586131613992
+    },
+    {
+      "x": "Kecepatan Angin Rata Rata",
+      "y": "O₃",
+      "v": -0.164887055135789
+    },
+    {
+      "x": "Kelembapan Rata Rata",
+      "y": "O₃",
+      "v": 0.0465416473253871
+    },
+    {
+      "x": "Temperatur Maksimum",
+      "y": "O₃",
+      "v": -0.0100793492338674
+    },
+    {
+      "x": "Temperatur Minimum",
+      "y": "O₃",
+      "v": -0.0728894146147951
+    },
+    {
+      "x": "Temperatur Rata Rata",
+      "y": "O₃",
+      "v": 0.0396012852328432
+    },
+    {
+      "x": "Curah Hujan",
+      "y": "PM₁₀",
+      "v": -0.142652156189115
+    },
+    {
+      "x": "Kecepatan Angin Maksimum",
+      "y": "PM₁₀",
+      "v": 0.032874945847801
+    },
+    {
+      "x": "Kecepatan Angin Rata Rata",
+      "y": "PM₁₀",
+      "v": -0.179403498407347
+    },
+    {
+      "x": "Kelembapan Rata Rata",
+      "y": "PM₁₀",
+      "v": 0.133748074413189
+    },
+    {
+      "x": "Temperatur Maksimum",
+      "y": "PM₁₀",
+      "v": 0.102758450621451
+    },
+    {
+      "x": "Temperatur Minimum",
+      "y": "PM₁₀",
+      "v": 0.0829758960045655
+    },
+    {
+      "x": "Temperatur Rata Rata",
+      "y": "PM₁₀",
+      "v": -0.0164869435014255
+    },
+    {
+      "x": "Curah Hujan",
+      "y": "PM₂.₅",
+      "v": -0.128146113761189
+    },
+    {
+      "x": "Kecepatan Angin Maksimum",
+      "y": "PM₂.₅",
+      "v": -0.0143478451147295
+    },
+    {
+      "x": "Kecepatan Angin Rata Rata",
+      "y": "PM₂.₅",
+      "v": -0.168931971239757
+    },
+    {
+      "x": "Kelembapan Rata Rata",
+      "y": "PM₂.₅",
+      "v": 0.123606347204682
+    },
+    {
+      "x": "Temperatur Maksimum",
+      "y": "PM₂.₅",
+      "v": 0.0904210704710875
+    },
+    {
+      "x": "Temperatur Minimum",
+      "y": "PM₂.₅",
+      "v": 0.0957811206435878
+    },
+    {
+      "x": "Temperatur Rata Rata",
+      "y": "PM₂.₅",
+      "v": -0.049875173935931
+    },
+    {
+      "x": "Curah Hujan",
+      "y": "SO₂",
+      "v": 0.201969660134525
+    },
+    {
+      "x": "Kecepatan Angin Maksimum",
+      "y": "SO₂",
+      "v": -0.115684486892289
+    },
+    {
+      "x": "Kecepatan Angin Rata Rata",
+      "y": "SO₂",
+      "v": -0.00825846116930988
+    },
+    {
+      "x": "Kelembapan Rata Rata",
+      "y": "SO₂",
+      "v": 0.196748295603574
+    },
+    {
+      "x": "Temperatur Maksimum",
+      "y": "SO₂",
+      "v": -0.287593852688815
+    },
+    {
+      "x": "Temperatur Minimum",
+      "y": "SO₂",
+      "v": -0.128780083564411
+    },
+    {
+      "x": "Temperatur Rata Rata",
+      "y": "SO₂",
+      "v": -0.0863120152801305
+    }
+  ],
+  "ispu_labels": [
+    "PM₁₀",
+    "PM₂.₅",
+    "SO₂",
+    "CO",
+    "O₃",
+    "NO₂"
+  ],
+  "ispu_values_avg": [
+    58.44,
+    92.02,
+    32.56,
+    31.82,
+    33.8,
+    16.77
+  ],
+  "ispu_station_data": {
+    "Bundaran HI": [
+      67.14,
+      98.79,
+      14.08,
+      43.37,
+      31.95,
+      24.51
+    ],
+    "Jagakarsa": [
+      50.06,
+      71.55,
+      46.4,
+      45.77,
+      22.34,
+      12.21
+    ],
+    "Kebon Jeruk": [
+      48.12,
+      106.78,
+      36.51,
+      13.38,
+      52,
+      17.57
+    ],
+    "Kelapa Gading": [
+      70.78,
+      94.85,
+      53.47,
+      24.6,
+      35.26,
+      9.7
+    ],
+    "Lubang Buaya": [
+      61.75,
+      83.67,
+      22.27,
+      19.11,
+      23.43,
+      12
+    ]
+  },
+  "bar_labels": [
+    "PM₁₀",
+    "PM₂.₅",
+    "SO₂",
+    "CO",
+    "O₃",
+    "NO₂"
+  ],
+  "bar_actual_ispu": [
+    57.6,
+    78.2,
+    41.4,
+    38.2,
+    26.4,
+    19
+  ]
+}

@@ -1,0 +1,6 @@
+{
+    "status": "ok",
+    "action": "save_pollutant",
+    "created": true,
+    "message": "Data polutan baru disimpan."
+}

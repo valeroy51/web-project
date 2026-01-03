@@ -56,6 +56,7 @@ INSTALLED_APPS = [
     'API.apps.ApiConfig',
     'huey.contrib.djhuey',
     "rest_framework",
+    "django_extensions",
 ]
 
 if DEBUG:

@@ -665,7 +665,7 @@ def data(request):
                 "file_type": file_type,
                 "inserted": inserted,
                 "skipped": skipped,
-                "upload_history": request.session.get("upload_history", []),
+                # "upload_history": request.session.get("upload_history", []),
             },status=200)
 
             

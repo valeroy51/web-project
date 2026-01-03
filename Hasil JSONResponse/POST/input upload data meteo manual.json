@@ -1,0 +1,6 @@
+{
+    "status": "ok",
+    "action": "save_meteo",
+    "created": true,
+    "message": "Data meteorologi baru disimpan."
+}
