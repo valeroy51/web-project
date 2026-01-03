@@ -11,9 +11,10 @@ from datetime import datetime
 import time
 from tqdm import tqdm
 from django.utils import timezone
-from pathlib import Path
 from django.conf import settings
 import os
+
+BASE_DIR = settings.BASE_DIR
 
 
 ENERGY_THR = 0.97
@@ -21,9 +22,9 @@ L_MIN, L_MAX = 40,40
 N_JOBS_INNER = -1
 LAMBDA_RIDGE = 1e-3
 
-MERGE_DIR = Path(settings.BASE_DIR) / "Dataset" / "Preprocess_2" / "Merged"
-NORM_DIR  = Path(settings.BASE_DIR) / "Dataset" / "Preprocess_2" / "MinMax"
-OUT_ROOT  = Path(settings.BASE_DIR) / "Dataset" / "MSSA"
+MERGE_DIR = os.path.join(BASE_DIR, "Dataset", "Preprocess_2", "Merged")
+NORM_DIR  = os.path.join(BASE_DIR, "Dataset", "Preprocess_2", "MinMax")
+OUT_ROOT  = os.path.join(BASE_DIR, "Dataset", "MSSA_Output")
 
 # MERGE_DIR = os.getenv("MERGE_DIR")
 # NORM_DIR  = os.getenv("NORM_DIR")
