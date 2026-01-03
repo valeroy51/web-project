@@ -21,7 +21,8 @@ from . import views
 from API import views as api_views
 from django.contrib.auth import logout
 from django.contrib.auth.views import LogoutView
-
+from django.urls import path
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     path('', views.home, name='home'),
@@ -37,6 +38,9 @@ urlpatterns = [
     path('merge/start/', views.merge, name='merge'),
     path("training/start/", views.train, name="train"),
     path("schedule-train/", views.schedule_train, name="schedule_train"),
+    
+    path("api/auth/token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 ]
 
 if settings.DEBUG:

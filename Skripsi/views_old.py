@@ -41,9 +41,7 @@ from datetime import datetime, timedelta, timezone
 import json, os
 import threading
 from functools import wraps
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAdminUser
-from rest_framework.response import Response
+
 
 logger = logging.getLogger(__name__)
 
@@ -64,44 +62,60 @@ def admin_login(request):
         if user is None:
             logger.warning(f"[LOGIN FAILED] Username '{username}' gagal login.")
 
-            return JsonResponse(
+            if wants_json(request):
+                return JsonResponse(
                     {"status": "error", "message": "Username atau password salah"},
                     status=401
                 )
 
+            messages.error(request, "Username atau password salah.")
+            return redirect("admin_login")
+
         if not user.is_staff:
             logger.warning(f"[LOGIN BLOCKED] User '{username}' bukan admin.")
 
-            return JsonResponse(
+            if wants_json(request):
+                return JsonResponse(
                     {"status": "forbidden", "message": "Akun ini bukan admin"},
                     status=403
                 )
+
+            messages.error(request, "Akses ditolak. Akun ini bukan admin.")
+            return redirect("admin_login")
 
         # sukses
         login(request, user)
         logger.warning(f"[LOGIN SUCCESS] User '{username}' berhasil login sebagai admin.")
 
-        return JsonResponse({
+        if wants_json(request):
+            return JsonResponse({
                 "status": "ok",
                 "message": "Login berhasil",
                 "redirect": "/",  # home
-            }, status=200)
+            })
 
-    return JsonResponse(
+        return redirect("home")
+
+    # GET
+    if wants_json(request):
+        return JsonResponse(
             {"detail": "Gunakan method POST"},
             status=405
         )
-    
-@api_view(["POST"])
-@permission_classes([IsAdminUser])
+
+    return render(request, "admin_login.html")
+
 def admin_logout(request):
     logout(request)
 
-    return JsonResponse({
+    if wants_json(request):
+        return JsonResponse({
             "status": "ok",
             "message": "Logout berhasil",
             "redirect": "/",  # home
-        }, status=200)
+        })
+
+    return redirect("home")
 
 def wants_json(request):
     accept = (request.headers.get("Accept") or "").lower()
@@ -115,22 +129,30 @@ def admin_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not request.user.is_authenticated:
-            return JsonResponse(
+            if wants_json(request):
+                return JsonResponse(
                     {"status": "unauthorized", "message": "Silakan login terlebih dahulu"},
                     status=401
                 )
+            messages.error(request, "Silakan login terlebih dahulu.")
+            return redirect("admin_login")
 
         if not request.user.is_staff:
-            return JsonResponse(
+            if wants_json(request):
+                return JsonResponse(
                     {"status": "forbidden", "message": "Akses ditolak. Akun ini bukan admin"},
                     status=403
                 )
+            messages.error(request, "Akses ditolak. Akun ini bukan admin.")
+            return redirect("home")
 
         return view_func(request, *args, **kwargs)
     return wrapper
 
 def polutan_info(request):
-    return JsonResponse({"status": "ok", "page": "penjelasan"})
+    if wants_json(request):
+        return JsonResponse({"status": "ok", "page": "penjelasan"})
+    return render(request, "penjelasan.html")
 
 def home(request):
     stations = Station.objects.exclude(
@@ -271,10 +293,13 @@ def home(request):
         "worst_station": worst_station,
     }
 
-    return JsonResponse(payload)
+    if wants_json(request):
+        return JsonResponse(payload)
 
-@api_view(["POST"])
-@permission_classes([IsAdminUser])
+    payload["stations_json"] = json.dumps(station_data)
+    return render(request, "home.html", payload)
+
+@admin_required
 def data(request):
     def safe_float(value):
         if pd.isna(value):
@@ -407,12 +432,14 @@ def data(request):
                         messages.info(request, "Data polutan lama diperbarui.")
                 # return redirect('/input/')
                 
-                return JsonResponse({
+                if wants_json(request):
+                    return JsonResponse({
                         "status": "ok",
                         "action": "save_pollutant",
                         "created": created,
                         "message": "Data polutan baru disimpan." if created else "Data polutan lama diperbarui.",
-                    },status=200)
+                    })
+                return redirect("/input/")
 
 
         elif 'save_meteo' in request.POST:
@@ -437,12 +464,14 @@ def data(request):
                         messages.info(request, f"Data meteorologi untuk {station_input.nama_stasiun} tanggal {tanggal_input} telah diperbarui.")
                 # return redirect('/input/')
                 
-                return JsonResponse({
+                if wants_json(request):
+                    return JsonResponse({
                         "status": "ok",
                         "action": "save_meteo",
                         "created": created,
                         "message": "Data meteorologi baru disimpan." if created else "Data meteorologi lama diperbarui.",
-                    },status=200)
+                    })
+                return redirect("/input/")
 
         elif 'upload' in request.POST and request.FILES.get('upload_file'):
             file = request.FILES['upload_file']
@@ -457,19 +486,27 @@ def data(request):
                 else:
                     messages.error(request, "Format file tidak didukung.")
                     
-                    return JsonResponse({"status": "error", "message": "Format file tidak didukung."}, status=400)
+                    if wants_json(request):
+                        return JsonResponse({"status": "error", "message": "Format file tidak didukung."}, status=400)
+                    return redirect("input")
                 
             except Exception as e:
                 messages.error(request, f"Gagal membaca file: {e}")
-                return JsonResponse({"status": "error", "message": "Gagal membaca file."}, status=400)
+                if wants_json(request):
+                    return JsonResponse({"status": "error", "message": "Gagal membaca file."}, status=400)
+                return redirect("input")
             
             if df.empty or df.dropna(how="all").shape[0] == 0:
                 messages.error(request, "File kosong! Pastikan Anda sudah mengisi data sebelum mengunggah template.")
-                return JsonResponse({"status": "error", "message": "File kosong!."}, status=400)
+                if wants_json(request):
+                    return JsonResponse({"status": "error", "message": "File kosong!."}, status=400)
+                return redirect("input")
 
             if 'tanggal' not in [c.lower().strip().replace(' ', '') for c in df.columns]:
                 messages.error(request, "File tidak memiliki kolom 'tanggal'. Pastikan format template sesuai.")
-                return JsonResponse({"status": "error", "message": "File tidak memiliki kolom 'tanggal'."}, status=400)
+                if wants_json(request):
+                    return JsonResponse({"status": "error", "message": "File tidak memiliki kolom 'tanggal'."}, status=400)
+                return redirect("input")
 
 
             df.columns = (
@@ -486,7 +523,9 @@ def data(request):
 
             if 'tanggal' not in df.columns:
                 messages.error(request, "Kolom 'tanggal' tidak ditemukan di file.")
-                return JsonResponse({"status": "error", "message": "Kolom 'tanggal' tidak ditemukan di file."}, status=400)
+                if wants_json(request):
+                    return JsonResponse({"status": "error", "message": "Kolom 'tanggal' tidak ditemukan di file."}, status=400)
+                return redirect("data")
             
             df['tanggal'] = parsedate(df['tanggal'])
             df = df[df['tanggal'].notna()]
@@ -500,7 +539,9 @@ def data(request):
 
             if df.empty:
                 messages.error(request, "Tidak ada data dalam rentang tanggal valid.")
-                return JsonResponse({"status": "error", "message": "Tidak ada data dalam rentang tanggal valid."}, status=400)
+                if wants_json(request):
+                    return JsonResponse({"status": "error", "message": "Tidak ada data dalam rentang tanggal valid."}, status=400)
+                return redirect("data")
 
             inserted, skipped = 0, 0
             matched_log = []
@@ -550,7 +591,9 @@ def data(request):
                     if not station_col:
                         print("Tidak ada kolom stasiun di file, kolom saat ini:", df.columns.to_list())
                         messages.error(request, "Tidak ada kolom stasiun di file!")
-                        return JsonResponse({"status": "error", "message": "Tidak ada kolom stasiun di file!."}, status=400)
+                        if wants_json(request):
+                            return JsonResponse({"status": "error", "message": "Tidak ada kolom stasiun di file!."}, status=400)
+                        return redirect("data")
 
                     stasiun_input = str(row.get(station_col, '')).strip().lower()
                     guessed_name = find_closest_station(stasiun_input)
@@ -613,7 +656,9 @@ def data(request):
                     if not station_col:
                         print("Tidak ada kolom stasiun di file, kolom saat ini:", df.columns.to_list())
                         messages.error(request, "Tidak ada kolom stasiun di file!")
-                        return JsonResponse({"status": "error", "message": "Tidak ada kolom stasiun di file!."}, status=400)
+                        if wants_json(request):
+                            return JsonResponse({"status": "error", "message": "Tidak ada kolom stasiun di file!."}, status=400)
+                        return redirect("data")
 
                     stasiun_input = str(row.get(station_col, '')).strip().lower()
                     
@@ -658,15 +703,16 @@ def data(request):
 
             active_tab = "upload"
             
-            return JsonResponse({
-                "status": "ok",
-                "action": "upload",
-                "file_name": uploaded_filename,
-                "file_type": file_type,
-                "inserted": inserted,
-                "skipped": skipped,
-                "upload_history": request.session.get("upload_history", []),
-            },status=200)
+            if wants_json(request):
+                return JsonResponse({
+                    "status": "ok",
+                    "action": "upload",
+                    "file_name": uploaded_filename,
+                    "file_type": file_type,
+                    "inserted": inserted,
+                    "skipped": skipped,
+                    "upload_history": request.session.get("upload_history", []),
+                })
 
             
         if uploaded_filename and inserted > 0:
@@ -707,17 +753,25 @@ def data(request):
         "upload_history": request.session.get("upload_history", []),
     }
 
-    return JsonResponse({
+    if wants_json(request):
+        return JsonResponse({
             "status": "ok",
             "upload_history": context["upload_history"],
             "active_tab": context["active_tab"],
             "uploaded_filename": context["uploaded_filename"],
             "file_type": context["file_type"],
-        },status=200)
+        })
 
-@api_view(["POST"])
-@permission_classes([IsAdminUser])
+    return render(request, "data.html", context)
+
+@admin_required
 def merge(request):
+    if request.method != "POST":
+        if wants_json(request):
+            return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+        messages.error(request, "Method tidak diizinkan.")
+        return redirect("input")
+
     from API.Utils.preprocess_ke_2 import prepare_training_data
 
     def job():
@@ -728,14 +782,23 @@ def merge(request):
 
     threading.Thread(target=job, daemon=True).start()
 
-    return Response({
-        "status": "started",
-        "message": "Merging data berjalan di background",
-    }, status=200)
+    if wants_json(request):
+        return JsonResponse({
+            "status": "started",
+            "message": "Merging data berjalan di background",
+        })
 
-@api_view(["POST"])
-@permission_classes([IsAdminUser])
+    messages.success(request, "Merging data sedang diproses.")
+    return redirect("input")
+
+@admin_required
 def train(request):
+    if request.method != "POST":
+        if wants_json(request):
+            return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+        messages.error(request, "Method tidak diizinkan.")
+        return redirect("input")
+        
     from API.Utils.Runner_MSSA import run_mssa_for_all
     
     def job():
@@ -746,14 +809,23 @@ def train(request):
 
     threading.Thread(target=job, daemon=True).start()
 
-    return JsonResponse({
+    if wants_json(request):
+        return JsonResponse({
             "status": "started",
             "message": "Training MSSA sedang berjalan di background",
-        }, status=200)
+        })
 
-@api_view(["POST"])
-@permission_classes([IsAdminUser])
+    messages.success(request, "Training MSSA sedang berjalan.")
+    return redirect("input")
+
+@admin_required
 def schedule_train(request):
+    if request.method != "POST":
+        if wants_json(request):
+            return JsonResponse({"status": "error", "message": "Method not allowed"}, status=405)
+        messages.error(request, "Method tidak diizinkan.")
+        return redirect("input")
+    
     if request.method == "POST":
         schedule_time = request.POST.get("schedule_time")
         offset_minutes = int(request.POST.get("tz_offset"))  # contoh: -420
@@ -767,11 +839,16 @@ def schedule_train(request):
         with open(SCHEDULE_FILE, "w") as f:
             json.dump({"scheduled_at": dt.isoformat()}, f)
 
-        return JsonResponse({
+        if wants_json(request):
+            return JsonResponse({
                 "status": "ok",
                 "scheduled_at": dt.isoformat(),
                 "message": "Training berhasil dijadwalkan"
-            },status=200)
+            })
+
+        messages.success(request, f"Training dijadwalkan pada {dt}")
+        return redirect("input")
+        # return JsonResponse({"status":"ok", "scheduled_at": dt.isoformat()})
     
 def tentang(request):
     team = [
@@ -785,7 +862,10 @@ def tentang(request):
         "team": team,
     }
 
-    return JsonResponse(payload, safe=False)
+    if wants_json(request):
+        return JsonResponse(payload, safe=False)
+
+    return render(request, "tentang.html", payload)
 
 def analisis(request):
     korelasi = CorrelationAnalysis.objects.all().order_by("-tanggal_analisis")
@@ -914,7 +994,10 @@ def analisis(request):
         "bar_actual_ispu": bar_actual_ispu,
     }
 
-    return JsonResponse(payload, safe=False)
+    if wants_json(request):
+        return JsonResponse(payload, safe=False)
+
+    return render(request, "analisis.html", payload)
 
 def prediksi(request, id_station):
     stasiun = get_object_or_404(Station, id_station=id_station)
@@ -1041,4 +1124,19 @@ def prediksi(request, id_station):
         }
     }
     
-    return JsonResponse(payload, safe=False)
+    if wants_json(request):
+        return JsonResponse(payload, safe=False)
+    
+    payload["station_id"] = id_station
+    
+    payload["akurasi"] = payload["model"]["akurasi"]
+    payload["mape"] = payload["model"]["mape"]
+    payload["rmse"] = payload["model"]["rmse"]
+    payload["mse"] = payload["model"]["mse"]
+    payload["mae"] = payload["model"]["mae"]
+    payload["p"] = payload["model"]["p"]
+    payload["l"] = payload["model"]["l"]
+    payload["k"] = payload["model"]["k"]
+    payload["r"] = payload["model"]["r"]
+    
+    return render(request, "prediksi.html", payload)
