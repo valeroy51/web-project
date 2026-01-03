@@ -1,9 +1,25 @@
 import subprocess
 import os
+import socket
 import time
 
-def run(cmd):
-    return subprocess.Popen(cmd, creationflags=subprocess.CREATE_NEW_CONSOLE)
+def wait_for_db(host: str, port: int, timeout: int = 60):
+    print(f"Waiting for DB at {host}:{port} ...")
+    start = time.time()
+    while True:
+        try:
+            with socket.create_connection((host, port), timeout=2):
+                print("DB is reachable.")
+                return
+        except OSError:
+            if time.time() - start > timeout:
+                raise TimeoutError("DB not reachable after timeout")
+            time.sleep(1)
+
+DB_HOST = os.getenv("DB_HOST", "database")
+DB_PORT = int(os.getenv("DB_PORT", "5432"))
+
+wait_for_db(DB_HOST, DB_PORT)
 
 print("Running migrate...")
 subprocess.run(["python", "manage.py", "migrate"], check=True)
@@ -24,11 +40,8 @@ subprocess.run(
 print("Collecting static files...")
 subprocess.run(["python", "manage.py", "collectstatic", "--noinput"], check=True)
 
-print("Huey worker...")
-run(["python", "manage.py", "run_huey"])
-
 print("Running MSSA Training (Run_All.py)...")
-run(["python", "API/Utils/Run_All.py"])
+subprocess.run(["python", "API/Utils/Run_All.py"])
 
-print("Tailwind...")
-run(["python", "manage.py", "tailwind", "dev"])
+print("Run Web...")
+subprocess.run(["python", "manage.py", "runserver", "0.0.0.0:8000"])

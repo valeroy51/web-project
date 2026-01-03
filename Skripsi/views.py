@@ -44,6 +44,12 @@ from functools import wraps
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
+from django.contrib.auth import authenticate
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
 
 logger = logging.getLogger(__name__)
 
@@ -51,46 +57,33 @@ format_date(datetime.now(), "EEEE, d MMMM y", locale="id")
 
 SCHEDULE_FILE = "training_schedule.json"
 
+@api_view(["POST"])
+@permission_classes([AllowAny])
 def admin_login(request):
-    if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
+    username = request.data.get("username")
+    password = request.data.get("password")
 
-        masked_pw = "*" * len(password) if password else ""
-        logger.warning(f"[LOGIN ATTEMPT] Username: {username} | Password Masked: {masked_pw}")
-
-        user = authenticate(request, username=username, password=password)
-
-        if user is None:
-            logger.warning(f"[LOGIN FAILED] Username '{username}' gagal login.")
-
-            return JsonResponse(
-                    {"status": "error", "message": "Username atau password salah"},
-                    status=401
-                )
-
-        if not user.is_staff:
-            logger.warning(f"[LOGIN BLOCKED] User '{username}' bukan admin.")
-
-            return JsonResponse(
-                    {"status": "forbidden", "message": "Akun ini bukan admin"},
-                    status=403
-                )
-
-        # sukses
-        login(request, user)
-        logger.warning(f"[LOGIN SUCCESS] User '{username}' berhasil login sebagai admin.")
-
-        return JsonResponse({
-                "status": "ok",
-                "message": "Login berhasil",
-                "redirect": "/",  # home
-            }, status=200)
-
-    return JsonResponse(
-            {"detail": "Gunakan method POST"},
-            status=405
+    user = authenticate(username=username, password=password)
+    if user is None:
+        return Response(
+            {"status": "error", "message": "Username atau password salah"},
+            status=status.HTTP_401_UNAUTHORIZED
         )
+
+    if not user.is_staff:
+        return Response(
+            {"status": "forbidden", "message": "Akun ini bukan admin"},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+    refresh = RefreshToken.for_user(user)
+
+    return Response({
+        "status": "ok",
+        "message": "Login berhasil",
+        "access": str(refresh.access_token),
+        "refresh": str(refresh),
+    }, status=status.HTTP_200_OK)
     
 @api_view(["POST"])
 @permission_classes([IsAdminUser])
@@ -102,32 +95,6 @@ def admin_logout(request):
             "message": "Logout berhasil",
             "redirect": "/",  # home
         }, status=200)
-
-def wants_json(request):
-    accept = (request.headers.get("Accept") or "").lower()
-    return (
-        request.GET.get("format") == "json"
-        or "application/json" in accept
-        or request.headers.get("X-Requested-With") == "XMLHttpRequest"
-    )
-
-def admin_required(view_func):
-    @wraps(view_func)
-    def wrapper(request, *args, **kwargs):
-        if not request.user.is_authenticated:
-            return JsonResponse(
-                    {"status": "unauthorized", "message": "Silakan login terlebih dahulu"},
-                    status=401
-                )
-
-        if not request.user.is_staff:
-            return JsonResponse(
-                    {"status": "forbidden", "message": "Akses ditolak. Akun ini bukan admin"},
-                    status=403
-                )
-
-        return view_func(request, *args, **kwargs)
-    return wrapper
 
 def polutan_info(request):
     return JsonResponse({"status": "ok", "page": "penjelasan"})

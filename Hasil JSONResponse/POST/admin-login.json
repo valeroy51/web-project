@@ -1,0 +1,6 @@
+{
+    "status": "ok",
+    "message": "Login berhasil",
+    "access": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzY3NDU5MTU4LCJpYXQiOjE3Njc0NTczNTgsImp0aSI6IjVkZDFjZGFjMDkxYzQ1NzRhN2FiNjUwNjI5OGUyMmIwIiwidXNlcl9pZCI6IjEifQ.4EEd7mZfdAzT2liiZ8ts-ZXkuuBpfeSraJrf2HrxIzA",
+    "refresh": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc2ODA2MjE1OCwiaWF0IjoxNzY3NDU3MzU4LCJqdGkiOiJjNzc2MjNlMmMwOTI0OGY5OTM1MTBiMDg5ZDRkZGQ0NSIsInVzZXJfaWQiOiIxIn0.jcHoHQ3s2prH53BlrBfwNv3rPoVUkMJ2M35tdFcksg8"
+}

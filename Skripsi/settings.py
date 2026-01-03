@@ -15,7 +15,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from npmpaths import getPathNPM
 from huey import MemoryHuey
 import os
 
@@ -37,12 +36,12 @@ ALLOWED_HOSTS = ['localhost', '127.0.0.1', '.ngrok-free.dev']
 
 
 # Application definition
-TAILWIND_APP_NAME = 'theme'
+# TAILWIND_APP_NAME = 'theme'
 
-try:
-    NPM_BIN_PATH = getPathNPM()
-except Exception:
-    NPM_BIN_PATH = None
+# try:
+#     NPM_BIN_PATH = getPathNPM()
+# except Exception:
+#     NPM_BIN_PATH = None
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -51,8 +50,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'tailwind',
-    'theme',
+    # 'tailwind',
+    # 'theme',
     'API.apps.ApiConfig',
     'huey.contrib.djhuey',
     "rest_framework",
@@ -129,7 +128,7 @@ DATABASES = {
         "USER": os.getenv("DB_USER"),
         "PASSWORD": os.getenv("DB_PASSWORD"),
         "HOST": os.getenv("DB_HOST"),
-        "PORT": os.getenv("DB_PORT"),
+        "PORT": os.getenv("DB_PORT", "5432"),
     }
 }
 
