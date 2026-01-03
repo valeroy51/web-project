@@ -24,7 +24,7 @@ LAMBDA_RIDGE = 1e-3
 
 MERGE_DIR = os.path.join(BASE_DIR, "Dataset", "Preprocess_2", "Merged")
 NORM_DIR  = os.path.join(BASE_DIR, "Dataset", "Preprocess_2", "MinMax")
-OUT_ROOT  = os.path.join(BASE_DIR, "Dataset", "MSSA_Output")
+OUT_ROOT  = os.path.join(BASE_DIR, "Dataset", "MSSA")
 
 # MERGE_DIR = os.getenv("MERGE_DIR")
 # NORM_DIR  = os.getenv("NORM_DIR")
