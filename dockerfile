@@ -14,4 +14,4 @@ COPY . .
 
 EXPOSE 8080
 
-# CMD [ "python", "manage.py", "runserver" ]
+CMD [ "python", "manage.py", "runserver" ]

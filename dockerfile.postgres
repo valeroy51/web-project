@@ -1,9 +1,0 @@
-FROM postgres:latest
-
-ENV POSTGRES_USER=Udara
-
-ENV POSTGRES_PASSWORD=Udaratarumanagara280904
-
-ENV POSTGRES_DB=UdaraDB
-
-EXPOSE 5431:5432
