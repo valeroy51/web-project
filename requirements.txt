@@ -11,7 +11,7 @@ huey
 numpy
 pandas
 scipy
-scikit-learn
+scikit-learn==1.7.2
 joblib
 
 matplotlib
@@ -26,4 +26,3 @@ babel
 PyJWT
 
 python-dotenv
-psycopg2-binary

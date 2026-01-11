@@ -3,24 +3,6 @@ import os
 import socket
 import time
 
-def wait_for_db(host: str, port: int, timeout: int = 60):
-    print(f"Waiting for DB at {host}:{port} ...")
-    start = time.time()
-    while True:
-        try:
-            with socket.create_connection((host, port), timeout=2):
-                print("DB is reachable.")
-                return
-        except OSError:
-            if time.time() - start > timeout:
-                raise TimeoutError("DB not reachable after timeout")
-            time.sleep(1)
-
-DB_HOST = os.getenv("DB_HOST", "database")
-DB_PORT = int(os.getenv("DB_PORT", "5432"))
-
-wait_for_db(DB_HOST, DB_PORT)
-
 print("Running migrate...")
 subprocess.run(["python", "manage.py", "migrate"], check=True)
 

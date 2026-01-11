@@ -27,13 +27,17 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 urlpatterns = [
     path('', views.home, name='home'),
     path('tentang/', views.tentang, name='tentang'),
-    path('input/', views.data, name='input'),
+    # path('input/', views.data, name='input'),
     path('analisis/', views.analisis, name='analisis'),
     path('prediksi/<int:id_station>/', views.prediksi, name='prediksi'),
     path("informasi-polutan/", views.polutan_info, name="polutan_info"),    
     
     path("admin-login/", views.admin_login, name="admin_login"),
-    path("logout/", views.admin_logout, name="logout"),
+    path("admin-logout/", views.admin_logout, name="logout"),
+    
+    path('input/polutan/', views.input_polutan, name='api_input_polutan'),
+    path('input/meteo/', views.input_meteo, name='api_input_meteo'),
+    path('upload/data/', views.upload_data, name='api_upload_data'),
     
     path('merge/start/', views.merge, name='merge'),
     path("training/start/", views.train, name="train"),

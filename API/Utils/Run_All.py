@@ -56,5 +56,3 @@ if __name__ == "__main__":
     print("\n====================================")
     print("   SEMUA PROSES SELESAI TANPA ERROR! ")
     print("====================================\n")
-
-    input("Tekan ENTER untuk keluar...")
